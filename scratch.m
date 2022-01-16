@@ -24,7 +24,7 @@ dispDuration=1;
  % duration of each image display
 waitDuration=2;
  % duration to wait betewen blocks
-intraBlockWaitDuration = 1; % duration to wait between same-shape displays in a clssification block
+interBlockDuration = 1; % duration to wait between same-shape displays in a clssification block
 
 % 
 % %% initiate psychtoolbox
@@ -81,7 +81,7 @@ for i=1:numClassificationBlocks
     % Screen('DrawLines', window, fixationCoords, lineWidthFixation, black, [xCenter
                                                                            % yCenter], 2);
     Screen('Flip', window);
-    WaitSecs(intraBlockWaitDuration);
+    WaitSecs(interBlockDuration);
    
     
     end

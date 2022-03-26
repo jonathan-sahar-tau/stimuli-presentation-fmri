@@ -29,9 +29,11 @@ blockWaitDuration=8;
 
 
 numRuns_classification = 4;
-numBlocks_classification = 4;
+numBlocks_classification = 6;
+assert(mod(numBlocks_classification, 3) == 0);
 numImagesPerClassificationBlock = 6;
-catchTrialBlockLocations_classification = [randi([1, numBlocks_classification/2], 1), randi([numBlocks_classification/2 + 1, numBlocksnumBlocks_classification], 1)]
+catchTrialBlockLocations_classification = [randi([1, numBlocks_classification/2], 1),...
+    randi([numBlocks_classification/2 + 1, numBlocks_classification], 1)]
 % randsample(2:numBlocks-1,numCatchTrialBlocks)
 
 fixationCrossSize = 20; %size of fixation cross in pixels
@@ -186,9 +188,9 @@ if runSecondPart
     % get the proper indices (x,y) from the running index
     [x, mostConfusedWithx] = ind2sub(size(avgCM), max_i); %the most confused pair
     mostConfusedPair = [x, mostConfusedWithx];
-    
+
     [v, leastConfusedWithx] = min(avgCM(x,:));
-    [x,  mostConfusedWithx, leastConfusedWithx] 
+    leastConfusedPair = [x, leastConfusedWithx];
    
     
     %% run the experiment - part 2
@@ -210,17 +212,21 @@ if runSecondPart
             waitForTimeOrEsc(blockWaitDuration_classification);
             
             % each run contains two cycles of blocks -
-            % with the most- and least-confused pairs
+            % with the most- and least-confused shapes with regard to x
+            % (one of the pair of most confused shapes globally)
             for pair = 1:size(indexPairs,1)
                 indexPair = indexPairs(pair,1:size(indexPairs,1));
-                
+                fprintf("currently running blocks of shapes: %d & %d\n", indexPair)
                 % every block is either 1 or 2, which is the index of the
                 % (single) shape that appears throughout the block.
-                blockIndices = [indexPair(1) * ones(1, numBlocks_classification/2), indexPair(2) * ones(1,numBlocks_classification/2)];
+                % the first index belongs to x - the shared shape between all
+                % runs, so we give it only 2/3 of the blocks in each run to
+                % get an overall number of blocks for each shape.
+                blockIndices = [indexPair(1) * ones(1, numBlocks_classification/3),...
+                                indexPair(2) * ones(1,numBlocks_classification*2/3)];
                 
                 blockIndices = blockIndices(randperm(length(blockIndices))); % shuffle the blocks
                 for i=1:numBlocks_classification
-                    i
                     % create the indices to use for displaying the shape(s)
                     % in this block
                     imageIndices = repmat(blockIndices(i), 1, numImagesPerClassificationBlock);
@@ -230,14 +236,14 @@ if runSecondPart
                         % indices of the shapes is constant, we get the other
                         % shape by subtracting from the total
                         otherShapeIndex = sum(indexPair) - blockIndices(i);
-                        catchImageIndex = randi([2,numImagesPerClassificationBlock], 1)
+                        catchImageIndex = randi([2,numImagesPerClassificationBlock], 1);
                         imageIndices(catchImageIndex) = otherShapeIndex;
                     end
                     
                     imageIndex_classification = [imageIndex_classification imageIndices];
                     
                     % log the start of this block
-                    blockStartTimes_classification(1, end+1) = toc(startTic)
+                    blockStartTimes_classification(1, end+1) = toc(startTic);
                     for imgIdx = imageIndices % iterate over block images
                         img = images{imgIdx};
                         Screen('PutImage', window, img); % put image on screen
@@ -331,6 +337,7 @@ end
     function waitForMRI()
     t_pressed = false;
     DisableKeysForKbCheck([]);
+    fprintf("waiting for next Tr cue from MRI...")
     while t_pressed == false
         [keyIsDown,secs, keyCode] = KbCheck;
         if keyCode(KbName('t'))
